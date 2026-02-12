@@ -6,3 +6,7 @@ __pycache__/
 venv/
 .venv/
 
+# output dirs
+out_offstat_*/
+out_offstat*/
+out_*/
