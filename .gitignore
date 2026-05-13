@@ -7,6 +7,16 @@ venv/
 .venv/
 
 # output dirs
+[Oo]utput*/
 out_offstat_*/
 out_offstat*/
 out_*/
+
+# generated images
+*.png
+
+# excel files
+*.xls
+*.xlsx
+*.xlsm
+*.xlsb

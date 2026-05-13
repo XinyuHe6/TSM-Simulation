@@ -1,7 +1,6 @@
 import random
 import math
 import networkx as nx
-import matplotlib.pyplot as plt
 
 # =========================
 # Helper: compute integer e_i from p, T

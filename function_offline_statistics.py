@@ -4,7 +4,7 @@ import bisect
 import networkx as nx
 
 # ============================================================
-# Random graph + p generator (match function_ei style)
+# Graph generators (match function_ei style)
 # ============================================================
 
 def generate_random_graph(A_size, I_size, edge_prob):
@@ -19,6 +19,52 @@ def generate_random_graph(A_size, I_size, edge_prob):
             neigh_i = [random.randrange(A_size)]
         neighbors.append(neigh_i)
     return neighbors
+
+
+def generate_k_regular_graph(A_size, I_size, degree):
+    """
+    Generate a graph where each impression type has exactly `degree`
+    advertiser neighbors.
+
+    - If A_size == I_size, build a simple bipartite k-regular graph via a
+      random union of disjoint cyclic perfect matchings, so both sides have
+      degree `degree`.
+    - If A_size != I_size, a true bipartite k-regular graph on both sides is
+      impossible in general. In that case we use the natural one-sided version
+      for this codebase: each type i has exactly `degree` distinct advertisers.
+
+    neighbors[i] remains the list of advertisers a connected to type i.
+    """
+    if degree < 0 or degree > A_size:
+        raise ValueError(f"regular degree must satisfy 0 <= k <= {A_size}, got {degree}.")
+
+    if A_size == I_size:
+        shifts = random.sample(range(A_size), degree)
+        neighbors = []
+        for i in range(I_size):
+            neigh_i = sorted((i + shift) % A_size for shift in shifts)
+            neighbors.append(neigh_i)
+        return neighbors
+
+    advertisers = list(range(A_size))
+    neighbors = []
+    for _ in range(I_size):
+        neigh_i = sorted(random.sample(advertisers, degree))
+        neighbors.append(neigh_i)
+    return neighbors
+
+
+def generate_graph(A_size, I_size, graph_mode, graph_param):
+    """
+    Dispatch graph generation by mode.
+    - random: graph_param is edge probability in [0, 1]
+    - k_regular: graph_param is integer degree k
+    """
+    if graph_mode == "random":
+        return generate_random_graph(A_size, I_size, float(graph_param))
+    if graph_mode == "k_regular":
+        return generate_k_regular_graph(A_size, I_size, int(graph_param))
+    raise ValueError(f"Unsupported graph_mode: {graph_mode}")
 
 
 def random_probability_vector(I_size):

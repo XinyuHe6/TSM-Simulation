@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-from function_offline_statistics import (
+from function_Correlated_Sampling import (
     generate_graph,
     random_probability_vector,
-    simulate_many_runs_offline_statistics,
+    simulate_many_runs_correlated_sampling,
 )
 
 import argparse
@@ -49,7 +49,6 @@ def build_graph_params(args, A_size, I_size):
 def main():
     parser = argparse.ArgumentParser()
 
-    # ===== params you want to control from shell =====
     parser.add_argument("--A", type=int, required=True)
     parser.add_argument("--I", type=int, required=True)
 
@@ -57,23 +56,30 @@ def main():
     parser.add_argument("--T_end", type=int, default=100)
     parser.add_argument("--T_step", type=int, default=5)
 
-    parser.add_argument("--edge_points", type=int, default=21)  # linspace(0,1,edge_points)
+    parser.add_argument("--edge_points", type=int, default=21)
     parser.add_argument("--graph_mode", type=str, choices=["random", "k_regular"], default="random")
     parser.add_argument("--regular_degree_start", type=int, default=1)
     parser.add_argument("--regular_degree_end", type=int, default=1)
     parser.add_argument("--regular_degree_step", type=int, default=1)
 
-    parser.add_argument("--num_graphs_per_cell", type=int, default=5)
-    parser.add_argument("--runs_per_graph", type=int, default=3)
+    parser.add_argument("--num_graphs_per_cell", type=int, default=3)
+    parser.add_argument("--runs_per_graph", type=int, default=5)
 
-    # ===== offline-statistics specific =====
-    parser.add_argument("--mc_trials", type=int, default=200)
     parser.add_argument("--use_poisson_len", action="store_true")
+    parser.add_argument("--lp_max_rounds", type=int, default=200)
+    parser.add_argument("--lp_separation_tol", type=float, default=1e-9)
+    parser.add_argument(
+        "--lp_constraint_mode",
+        type=str,
+        choices=["natural", "pair_approx"],
+        default="natural",
+    )
+    parser.add_argument("--lp_pair_cap", type=float, default=None)
 
     parser.add_argument("--seed", type=int, default=0)
 
-    parser.add_argument("--out_csv", type=str, default="results_offline_statistics.csv")
-    parser.add_argument("--out_fig", type=str, default="surface_offline_statistics.png")
+    parser.add_argument("--out_csv", type=str, default="results_correlated_sampling.csv")
+    parser.add_argument("--out_fig", type=str, default="surface_correlated_sampling.png")
 
     args = parser.parse_args()
 
@@ -93,7 +99,6 @@ def main():
 
     for i_T, T in enumerate(Ts):
         for j_gp, graph_param in enumerate(graph_params):
-
             if T == 0:
                 Z[i_T, j_gp] = 0.0
                 pbar_cells.update(1)
@@ -101,7 +106,6 @@ def main():
 
             ratios = []
             for g in range(args.num_graphs_per_cell):
-                # make graph + p reproducible per cell
                 cell_seed = args.seed + 100000 * i_T + 1000 * j_gp + g
                 np.random.seed(cell_seed)
                 random.seed(cell_seed)
@@ -109,28 +113,33 @@ def main():
                 neighbors = generate_graph(A_size, I_size, args.graph_mode, graph_param)
                 p = random_probability_vector(I_size)
 
-                avg_ratio_alg2, _ = simulate_many_runs_offline_statistics(
-                    A_size, I_size, neighbors, p, int(T),
-                    mc_trials=args.mc_trials,
+                avg_ratio_corr, _ = simulate_many_runs_correlated_sampling(
+                    A_size=A_size,
+                    I_size=I_size,
+                    neighbors=neighbors,
+                    p=p,
+                    T=int(T),
                     num_runs=args.runs_per_graph,
                     seed=cell_seed,
-                    use_poisson_len=args.use_poisson_len
+                    use_poisson_len=args.use_poisson_len,
+                    lp_max_rounds=args.lp_max_rounds,
+                    lp_separation_tol=args.lp_separation_tol,
+                    lp_constraint_mode=args.lp_constraint_mode,
+                    lp_pair_cap=args.lp_pair_cap,
                 )
-                ratios.append(float(avg_ratio_alg2))
+                ratios.append(float(avg_ratio_corr))
 
             Z[i_T, j_gp] = float(np.mean(ratios)) if ratios else 0.0
             pbar_cells.update(1)
 
     pbar_cells.close()
 
-    # ===== write CSV =====
     with open(args.out_csv, "w", encoding="utf-8") as f:
         f.write(f"T,{csv_label},mean_ratio\n")
         for i_T, T in enumerate(Ts):
             for j_gp, graph_param in enumerate(graph_params):
                 f.write(f"{int(T)},{float(graph_param):.10f},{float(Z[i_T, j_gp]):.10f}\n")
 
-    # ===== plot from CSV =====
     data = np.genfromtxt(args.out_csv, delimiter=",", skip_header=1)
     Ts2 = np.unique(data[:, 0]).astype(int)
     graph_params2 = np.unique(data[:, 1])
@@ -148,15 +157,22 @@ def main():
     ax = fig.add_subplot(111, projection="3d")
 
     surf = ax.plot_surface(
-        GP_grid2, T_grid2, Z2,
-        rstride=1, cstride=1,
-        linewidth=0, antialiased=True
+        GP_grid2,
+        T_grid2,
+        Z2,
+        rstride=1,
+        cstride=1,
+        linewidth=0,
+        antialiased=True,
     )
 
     ax.set_xlabel(x_label)
     ax.set_ylabel("T (horizon)")
-    ax.set_zlabel("ALG / OPT ratio (Offline Statistics Alg2)")
-    ax.set_title(f"Offline Statistics Alg2 vs T and {title_suffix} (A={A_size}, I={I_size})")
+    ax.set_zlabel("ALG / OPT ratio (Correlated Sampling)")
+    ax.set_title(
+        f"Correlated Sampling ({args.lp_constraint_mode}) vs T and {title_suffix} "
+        f"(A={A_size}, I={I_size})"
+    )
     ax.set_zlim(bottom=0)
 
     fig.colorbar(surf, shrink=0.5, aspect=10, label="ALG / OPT ratio")
