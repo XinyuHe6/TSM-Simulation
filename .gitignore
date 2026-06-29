@@ -1,19 +1,30 @@
 # python
 __pycache__/
 *.pyc
+*.pyo
+.pytest_cache/
 
 # venv
 venv/
 .venv/
 
-# output dirs
-[Oo]utput*/
-out_offstat_*/
-out_offstat*/
-out_*/
+# generated output
+/out/
+/out_*/
+/output*/
+/Output*/
+/*.csv
+/*.png
 
-# generated images
-*.png
+# legacy pre-modular code kept locally
+/*.py
+/*.sh
+/*.ipynb
+
+# local papers and Windows metadata
+/*.pdf
+/*.pdf:Zone.Identifier
+*:Zone.Identifier
 
 # excel files
 *.xls
