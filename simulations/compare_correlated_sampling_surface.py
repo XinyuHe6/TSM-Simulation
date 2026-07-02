@@ -2,7 +2,7 @@
 
 import argparse
 
-from common import (
+from .common import (
     add_common_run_args,
     add_graph_mode_sweep_args,
     build_graph_mode_sweep_values,

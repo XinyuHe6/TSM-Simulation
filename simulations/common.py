@@ -2,12 +2,6 @@ import csv
 import math
 import os
 import random
-import sys
-
-
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if PROJECT_ROOT not in sys.path:
-    sys.path.insert(0, PROJECT_ROOT)
 
 try:
     from tqdm.auto import tqdm
@@ -51,9 +45,24 @@ def arrival_algorithm_from_args(args):
 
 
 def add_common_run_args(parser, default_algorithms=DEFAULT_RATIO_ALGORITHMS):
-    parser.add_argument("--num_graphs_per_point", type=int, default=5)
-    parser.add_argument("--runs_per_graph", type=int, default=3)
-    parser.add_argument("--mc_trials", type=int, default=20)
+    parser.add_argument(
+        "--num_graphs_per_point",
+        type=int,
+        default=5,
+        help="Independent random graphs evaluated at each x-axis/grid point.",
+    )
+    parser.add_argument(
+        "--runs_per_graph",
+        type=int,
+        default=3,
+        help="Independent arrival realizations evaluated on each graph.",
+    )
+    parser.add_argument(
+        "--mc_trials",
+        type=int,
+        default=20,
+        help="Offline Monte Carlo trials used to prepare Manshadi algorithms.",
+    )
     parser.add_argument(
         "--algorithms",
         type=str,
@@ -63,17 +72,59 @@ def add_common_run_args(parser, default_algorithms=DEFAULT_RATIO_ALGORITHMS):
             "algorithm, or 'default' for this script's default set."
         ),
     )
-    parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--seed", type=int, default=0, help="Base random seed.")
     parser.set_defaults(use_poisson_len=False)
-    parser.add_argument("--use_poisson_len", dest="use_poisson_len", action="store_true")
-    parser.add_argument("--no_use_poisson_len", dest="use_poisson_len", action="store_false")
-    parser.add_argument("--corr_lp_constraint_mode", choices=["natural", "pair_approx"], default="pair_approx")
-    parser.add_argument("--corr_lp_max_rounds", type=int, default=20)
-    parser.add_argument("--corr_lp_separation_tol", type=float, default=1e-9)
-    parser.add_argument("--corr_lp_pair_cap", type=float, default=None)
-    parser.add_argument("--skip_failed_points", action="store_true")
-    parser.add_argument("--no_plot", action="store_true")
-    parser.add_argument("--show", action="store_true")
+    parser.add_argument(
+        "--use_poisson_len",
+        dest="use_poisson_len",
+        action="store_true",
+        help="Sample the realized arrival length from Poisson(T).",
+    )
+    parser.add_argument(
+        "--no_use_poisson_len",
+        dest="use_poisson_len",
+        action="store_false",
+        help="Use exactly T realized arrivals (the default).",
+    )
+    parser.add_argument(
+        "--corr_lp_constraint_mode",
+        choices=["natural", "pair_approx"],
+        default="pair_approx",
+        help="Correlated Sampling LP: exact cutting-plane constraints or fast pair approximation.",
+    )
+    parser.add_argument(
+        "--corr_lp_max_rounds",
+        type=int,
+        default=20,
+        help="Maximum cutting-plane rounds for the natural Correlated Sampling LP.",
+    )
+    parser.add_argument(
+        "--corr_lp_separation_tol",
+        type=float,
+        default=1e-9,
+        help="Constraint-violation tolerance for the natural LP.",
+    )
+    parser.add_argument(
+        "--corr_lp_pair_cap",
+        type=float,
+        default=None,
+        help="Optional override for the pairwise LP constraint RHS.",
+    )
+    parser.add_argument(
+        "--skip_failed_points",
+        action="store_true",
+        help="Write NaN and continue when an algorithm cannot prepare a point.",
+    )
+    parser.add_argument(
+        "--no_plot",
+        action="store_true",
+        help="Write CSV only; do not create a figure.",
+    )
+    parser.add_argument(
+        "--show",
+        action="store_true",
+        help="Open the figure interactively after saving it.",
+    )
 
 
 def validate_common_args(args):
@@ -85,6 +136,12 @@ def validate_common_args(args):
         raise ValueError("--num_graphs_per_point must be positive.")
     if args.runs_per_graph <= 0:
         raise ValueError("--runs_per_graph must be positive.")
+    if args.mc_trials <= 0:
+        raise ValueError("--mc_trials must be positive.")
+    if args.corr_lp_max_rounds <= 0:
+        raise ValueError("--corr_lp_max_rounds must be positive.")
+    if args.corr_lp_separation_tol < 0:
+        raise ValueError("--corr_lp_separation_tol must be non-negative.")
 
 
 def linspace(start, stop, num):
@@ -118,8 +175,18 @@ def int_range(start, end, step):
 
 
 def add_graph_mode_sweep_args(parser):
-    parser.add_argument("--graph_mode", choices=["random", "k_regular"], default="random")
-    parser.add_argument("--edge_points", type=int, default=21)
+    parser.add_argument(
+        "--graph_mode",
+        choices=["random", "k_regular"],
+        default="random",
+        help="Sweep random edge probability or k-regular degree.",
+    )
+    parser.add_argument(
+        "--edge_points",
+        type=int,
+        default=21,
+        help="Number of evenly spaced edge probabilities in [0, 1].",
+    )
     parser.add_argument("--regular_degree_start", type=int, default=0)
     parser.add_argument("--regular_degree_end", type=int, default=None)
     parser.add_argument("--regular_degree_step", type=int, default=1)

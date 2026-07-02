@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from compare_manshadi_tries import main
+from .compare_manshadi_tries import main
 
 
 if __name__ == "__main__":

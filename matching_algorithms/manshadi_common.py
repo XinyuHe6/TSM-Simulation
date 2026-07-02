@@ -16,7 +16,7 @@ def prepare_group_state(
     **kwargs,
 ):
     del kwargs
-    from function_offline_statistics_multiple import (
+    from .manshadi_multiple import (
         prepare_offline_statistics_multi_state,
     )
 
@@ -62,7 +62,7 @@ def prepare_state_for_try_count(
 
 def run_with_try_count(A_size, arrivals, state, try_count):
     require_state(f"manshadi{try_count}", state)
-    from function_offline_statistics_multiple import simulate_offline_statistics_k_on_arrivals
+    from .manshadi_multiple import simulate_offline_statistics_k_on_arrivals
 
     return simulate_offline_statistics_k_on_arrivals(
         A_size,

@@ -23,7 +23,7 @@ def prepare_state(
     **kwargs,
 ):
     del kwargs
-    from function_Correlated_Sampling import prepare_correlated_sampling_state
+    from .correlated_sampling_core import prepare_correlated_sampling_state
 
     return prepare_correlated_sampling_state(
         A_size=A_size,
@@ -41,7 +41,7 @@ def prepare_state(
 def run(A_size, I_size, neighbors, arrivals, state=None):
     del I_size
     require_state("correlated_sampling", state)
-    from function_Correlated_Sampling import simulate_correlated_sampling_on_arrivals
+    from .correlated_sampling_core import simulate_correlated_sampling_on_arrivals
 
     return simulate_correlated_sampling_on_arrivals(
         A_size,

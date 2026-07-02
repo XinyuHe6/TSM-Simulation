@@ -2,7 +2,7 @@
 
 import argparse
 
-from common import (
+from .common import (
     DEFAULT_RATIO_ALGORITHMS,
     add_common_run_args,
     evaluate_graph_parameter_point,
@@ -10,6 +10,7 @@ from common import (
     parse_algorithms,
     plot_lines,
     tqdm,
+    validate_common_args,
     write_wide_csv,
 )
 
@@ -34,12 +35,9 @@ def parse_args():
         raise ValueError("--n must be positive.")
     if args.T is None:
         args.T = args.n
-    if args.T < 0:
-        raise ValueError("--T must be non-negative.")
-    if args.num_graphs_per_point <= 0:
-        raise ValueError("--num_graphs_per_point must be positive.")
-    if args.runs_per_graph <= 0:
-        raise ValueError("--runs_per_graph must be positive.")
+    args.A = args.n
+    args.I = args.n
+    validate_common_args(args)
     if args.k_end > args.n:
         raise ValueError("--k_end cannot exceed n because edge_prob = k / n.")
     args.algorithms = parse_algorithms(

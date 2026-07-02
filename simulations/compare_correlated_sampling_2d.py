@@ -2,7 +2,7 @@
 
 import argparse
 
-from common import (
+from .common import (
     add_common_run_args,
     add_graph_mode_sweep_args,
     build_graph_mode_sweep_values,
@@ -11,6 +11,7 @@ from common import (
     parse_algorithms,
     plot_lines,
     tqdm,
+    validate_common_args,
     write_wide_csv,
 )
 
@@ -30,6 +31,7 @@ def parse_args():
     args.A = args.N
     args.I = args.N
     args.T = args.N
+    validate_common_args(args)
     args.algorithms = parse_algorithms(args.algorithms, "correlated_sampling")
     if len(args.algorithms) != 1:
         raise ValueError("This script expects exactly one algorithm.")

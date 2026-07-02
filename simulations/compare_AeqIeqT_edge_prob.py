@@ -2,13 +2,14 @@
 
 import argparse
 
-from common import (
+from .common import (
     add_common_run_args,
     evaluate_graph_parameter_point,
     linspace,
     parse_algorithms,
     plot_lines,
     tqdm,
+    validate_common_args,
     write_wide_csv,
 )
 
@@ -31,6 +32,7 @@ def parse_args():
     args.A = args.N
     args.I = args.N
     args.T = args.N
+    validate_common_args(args)
     args.algorithms = parse_algorithms(args.algorithms, DEFAULT_ALGORITHMS)
     if args.out_csv is None:
         args.out_csv = f"AeqIeqT_edge_prob_N{args.N}.csv"

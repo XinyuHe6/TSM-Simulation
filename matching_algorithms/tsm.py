@@ -15,7 +15,7 @@ ALIASES = ("tsm",)
 def prepare_state(A_size, I_size, neighbors, p=None, T=None, e=None, **kwargs):
     del kwargs
     from arrival_algorithms import integerize_probability_vector, validate_arrival_counts
-    from function_ei import compute_blue_red_matchings
+    from .tsm_core import compute_blue_red_matchings
 
     if e is None:
         if p is None or T is None:

@@ -1,13 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
-import os
 import random
-import sys
-
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if PROJECT_ROOT not in sys.path:
-    sys.path.insert(0, PROJECT_ROOT)
 
 try:
     from tqdm.auto import tqdm
@@ -18,7 +12,7 @@ except ImportError:
 from arrival_algorithms import random_arrival_counts
 from graph_algorithms import generate_graph
 
-from common import ensure_parent_dir, format_float, linspace, mean, plot_series
+from .common import ensure_parent_dir, format_float, linspace, mean, plot_series
 
 
 def parse_try_counts(raw_tries):
@@ -60,7 +54,9 @@ def build_parser(default_tries="2,3,4,5,6,7,8,9,10"):
 
 
 def evaluate_one_edge_prob(args, edge_prob, edge_index, try_counts):
-    from function_offline_statistics_multiple import simulate_many_runs_offline_statistics_multi
+    from matching_algorithms.manshadi_multiple import (
+        simulate_many_runs_offline_statistics_multi,
+    )
 
     values_by_try = {try_count: [] for try_count in try_counts}
     for graph_index in range(args.num_graphs_per_point):
@@ -107,6 +103,14 @@ def main(default_tries="2,3,4,5,6,7,8,9,10"):
         raise ValueError("--A and --I must be positive.")
     if args.T < 0:
         raise ValueError("--T must be non-negative.")
+    if args.edge_points <= 0:
+        raise ValueError("--edge_points must be positive.")
+    if args.num_graphs_per_point <= 0:
+        raise ValueError("--num_graphs_per_point must be positive.")
+    if args.runs_per_graph <= 0:
+        raise ValueError("--runs_per_graph must be positive.")
+    if args.mc_trials <= 0:
+        raise ValueError("--mc_trials must be positive.")
     try_counts = parse_try_counts(args.tries)
     edge_probs = linspace(0.0, 1.0, args.edge_points)
     values_by_try = {try_count: [] for try_count in try_counts}

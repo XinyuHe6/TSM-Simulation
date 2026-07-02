@@ -2,7 +2,7 @@
 
 import argparse
 
-from common import (
+from .common import (
     DEFAULT_ALG_COUNT_ALGORITHMS,
     add_common_run_args,
     evaluate_graph_parameter_point,
